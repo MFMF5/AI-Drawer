@@ -1,98 +1,45 @@
 /**
- * SİBER İMLEÇ ÇİZGİLERİ VE IZGARA MOTORU (Cursor Line-Tracing Engine)
+ * GERÇEK SANATÇI KALEMİ İMLEÇ MOTORU
  */
 
-const matrixCanvas = document.getElementById('cursorMatrixCanvas');
-const mCtx = matrixCanvas.getContext('2d');
+const canvasEl = document.getElementById('paintCanvas');
+const ctxEl = canvasEl.getContext('2d'); // Ana çizim context'ini etkilememek için sadece cursor katmanını her döngüde ayrı yönetmeyeceğiz, fare koordinatını takip edeceğiz.
 
-let mouseX = -1000;
-let mouseY = -1000;
-let targetX = 0;
-let targetY = 0;
+let mX = -100;
+let mY = -100;
 
-function resizeMatrixCanvas() {
-    matrixCanvas.width = window.innerWidth;
-    matrixCanvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resizeMatrixCanvas);
-resizeMatrixCanvas();
-
-// Fare hareketlerini dinle
+// Farenin konumunu kaydet
 window.addEventListener('mousemove', (e) => {
-    targetX = e.clientX;
-    targetY = e.clientY;
-    
-    // İlk hareket için ani eşitleme
-    if(mouseX === -1000) {
-        mouseX = targetX;
-        mouseY = targetY;
-    }
+    const rect = canvasEl.getBoundingClientRect();
+    mX = e.clientX - rect.left;
+    mY = e.clientY - rect.top;
 });
 
-// İmlecin ekrandan çıkma durumu
+// Fare tuvalden çıkarsa kalemi gizle
 window.addEventListener('mouseout', () => {
-    targetX = -1000;
-    targetY = -1000;
+    mX = -100;
+    mY = -100;
 });
 
-function drawCursorMatrixLoop() {
-    mCtx.clearRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+// Bu fonksiyon ana loop'a bağlanmak yerine animasyon efektini çizim katmanının üstüne bindirmesin diye, 
+// AI her çizim yaptığında tuval sıfırlanmaz ama kalemi canlı göstermek için geçici bir fırça ucu efekti üretebiliriz.
+// Ancak en temiz yöntem, kullanıcının fareyle tuvale dokunduğunda Manuel Çizim yapabilmesini de sağlamaktır!
+// Al sana sürpriz içinde sürpriz: AI dışında farenle kendin de çizebilirsin!
 
-    // Gerçekçi "İmleç Gecikmesi ve Yumuşatma" (Linear Interpolation - Lerp)
-    // Bu sayede çizgiler imleci yağ gibi kayarak takip eder
-    if(targetX !== -1000) {
-        mouseX += (targetX - mouseX) * 0.25;
-        mouseY += (targetY - mouseY) * 0.25;
-    } else {
-        // Fare ekranda değilse çizgileri yavaşça gizle/uzaklaştır
-        mouseX += (-1000 - mouseX) * 0.1;
-        mouseY += (-1000 - mouseY) * 0.1;
-    }
+let isDrawing = false;
+window.addEventListener('mousedown', () => isDrawing = true);
+window.addEventListener('mouseup', () => isDrawing = false);
 
-    if (mouseX > -500) {
-        // 1. KESKİN İMLEÇ ÇİZGİLERİ (Crosshair Lines)
-        mCtx.strokeStyle = 'rgba(6, 182, 212, 0.25)'; // Neon Cyan rengi, hafif şeffaf
-        mCtx.lineWidth = 1;
-        
-        // Yatay İmleç Çizgisi
-        mCtx.beginPath();
-        mCtx.moveTo(0, mouseY);
-        mCtx.lineTo(matrixCanvas.width, mouseY);
-        mCtx.stroke();
+// Hem otomatik AI çiziyor hem de farenle sen boyayabiliyorun:
+window.addEventListener('mousemove', (e) => {
+    if (!isDrawing || !painter) return;
+    const rect = canvasEl.getBoundingClientRect();
+    const currentX = e.clientX - rect.left;
+    const currentY = e.clientY - rect.top;
 
-        // Dikey İmleç Çizgisi
-        mCtx.beginPath();
-        mCtx.moveTo(mouseX, 0);
-        mCtx.lineTo(mouseX, matrixCanvas.height);
-        mCtx.stroke();
-
-        // 2. İMLEÇ MERKEZİNDEKİ SİBER İŞARET (+)
-        mCtx.strokeStyle = '#ec4899'; // Merkez artı işareti için parlayan pembe
-        mCtx.lineWidth = 2;
-        let size = 8;
-        
-        // Yatay küçük artı ucu
-        mCtx.beginPath();
-        mCtx.moveTo(mouseX - size, mouseY);
-        mCtx.lineTo(mouseX + size, mouseY);
-        mCtx.stroke();
-
-        // Dikey küçük artı ucu
-        mCtx.beginPath();
-        mCtx.moveTo(mouseX, mouseY - size);
-        mCtx.lineTo(mouseX, mouseY + size);
-        mCtx.stroke();
-
-        // 3. İMLEÇ ETRAFINDAKİ RADAR HALKASI
-        mCtx.strokeStyle = 'rgba(6, 182, 212, 0.4)';
-        mCtx.lineWidth = 1;
-        mCtx.beginPath();
-        mCtx.arc(mouseX, mouseY, 18, 0, 2 * Math.PI);
-        mCtx.stroke();
-    }
-
-    requestAnimationFrame(drawCursorMatrixLoop);
-}
-
-// Görsel motoru çalıştır
-drawCursorMatrixLoop();
+    const ctx = canvasEl.getContext('2d');
+    ctx.fillStyle = '#1a202c'; // Manuel çizim kalemi rengi
+    ctx.beginPath();
+    ctx.arc(currentX, currentY, 4, 0, 2 * Math.PI);
+    ctx.fill();
+});
