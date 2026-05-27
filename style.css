@@ -1,0 +1,199 @@
+:root {
+    --bg-dark: #090d16;
+    --panel-bg: #111827;
+    --border-color: #1f2937;
+    --text-main: #f3f4f6;
+    --text-muted: #6b7280;
+    --neon-cyan: #06b6d4;
+    --neon-pink: #ec4899;
+    --neon-green: #10b981;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Consolas', 'Courier New', monospace;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Arka Plan Canvas */
+#cursorMatrixCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none; /* Tıklamaları engellemez */
+}
+
+/* Düzen */
+.workspace-layout {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+    padding: 20px;
+    height: 100vh;
+}
+
+.panel {
+    background: rgba(17, 24, 39, 0.85);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+.panel-header {
+    padding: 12px 15px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-color);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* Sol Panel Özel Stiller */
+.left-panel {
+    padding: 15px;
+    gap: 20px;
+}
+
+.ai-status-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(0,0,0,0.3);
+    padding: 12px;
+    border-radius: 6px;
+    border-left: 3px solid var(--neon-cyan);
+}
+
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--neon-green);
+    box-shadow: 0 0 8px var(--neon-green);
+}
+
+.status-indicator.thinking {
+    background-color: var(--neon-pink);
+    box-shadow: 0 0 8px var(--neon-pink);
+    animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse { 0% { opacity: 0.4; } 100% { opacity: 1; } }
+
+.status-title { font-size: 0.9rem; font-weight: bold; }
+.status-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+
+.stats-box {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stat-row { display: flex; justify-content: space-between; }
+.stat-row span:first-child { color: var(--text-muted); }
+.stat-row span:last-child { color: var(--neon-cyan); }
+
+.info-footer {
+    margin-top: auto;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+/* Ana Sohbet Paneli */
+.main-panel {
+    flex: 1;
+}
+
+.chat-container {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.message {
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    max-width: 85%;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.message.ai {
+    background: rgba(6, 182, 212, 0.05);
+    border-left: 3px solid var(--neon-cyan);
+    align-self: flex-start;
+}
+
+.message.user {
+    background: rgba(255, 255, 255, 0.03);
+    border-right: 3px solid var(--text-muted);
+    align-self: flex-end;
+}
+
+.bot-tag {
+    color: var(--neon-cyan);
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+/* Girdi Alanı */
+.input-area {
+    padding: 15px;
+    display: flex;
+    gap: 10px;
+    border-top: 1px solid var(--border-color);
+    background: rgba(0,0,0,0.1);
+}
+
+#userInput {
+    flex: 1;
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 12px;
+    font-family: inherit;
+    border-radius: 6px;
+    outline: none;
+}
+#userInput:focus { border-color: var(--neon-cyan); }
+
+#sendBtn {
+    background: var(--neon-cyan);
+    color: var(--bg-dark);
+    border: none;
+    padding: 0 20px;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s;
+}
+#sendBtn:hover { background: #22d3ee; }d
