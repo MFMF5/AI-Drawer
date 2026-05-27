@@ -1,161 +1,154 @@
 /**
- * CORE AI - Doğal Dil İşleme ve Anlama Motoru (v1.2)
+ * AI NEURAL PAINTER ENGINE
  */
 
-class CoreAI {
-    constructor() {
-        // AI'ın kelime/niyet (Intent) haritası
-        this.intents = {
-            selamlasma: {
-                keywords: ['selam', 'merhaba', 'hey', 'sa', 'naber', 'hi'],
-                responses: [
-                    "Selam insan dostum! Sistemlerim aktif, seni dinliyorum.",
-                    "Merhaba! Algoritmalarım senin için hazır. Ne yapıyoruz bugün?",
-                    "Hey! Çalışma alanıma hoş geldin. Kod mu yazıyoruz, sohbet mi?"
-                ],
-                mood: "Kararlı / Neşeli"
-            },
-            durum_sorgu: {
-                keywords: ['nasılsın', 'nasıl gidiyor', 'keyifler', 'durumun ne'],
-                responses: [
-                    "Çekirdek sıcaklığım normal, nöron simülasyonum kararlı. Sen nasılsın?",
-                    "Milyonlarca satır veriyi işlemekle meşgulüm ama senin için her zaman vaktim var. Harikayım!",
-                    "Kuantum durumum %100 verimlilikte çalışıyor. Sorularını bekliyorum."
-                ],
-                mood: "Enerjik"
-            },
-            kod_yardimi: {
-                keywords: ['kod', 'yazılım', 'programlama', 'javascript', 'html', 'css', 'python'],
-                responses: [
-                    "Kod mu? İşte benim en sevdiğim alan! Fonksiyonu veya algoritmayı söyle, hemen tasarlayayım.",
-                    "Yazılım mühendisliği modülüm tetiklendi. Hangi dilde problem yaşıyorsun?",
-                    "Mantıksal hata mı var, yoksa sıfırdan bir mimari mi kuruyoruz? Detay ver, halledelim."
-                ],
-                mood: "Mühendis Modu"
-            },
-            temizleme: {
-                keywords: ['temizle', 'clear', 'sil', 'ekranı temizle'],
-                responses: ["CLEAR_COMMAND_TRIGGERED"],
-                mood: "Düzenli"
-            },
-            yardim: {
-                keywords: ['yardım', 'help', 'ne yapabilirsin', 'komutlar'],
-                responses: [
-                    "Ben seni anlayan bir yapay zekayım. Bana 'nasılsın' diyebilir, 'yazılım/kod' projelerinden bahsedebilir ya da ekranı 'temizle' komutuyla sıfırlayabilirsin.",
-                    "Doğal dil işleme motorum sayesinde cümlelerinden anlam çıkarabilirim. Rahatça konuş benimle!"
-                ],
-                mood: "Yardımsever"
-            }
+class PainterAI {
+    constructor(canvasId) {
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext('2d');
+        
+        // Renk Veritabanı
+        this.colors = {
+            'kırmızı': '#e53e3e', 'mavi': '#3182ce', 'yeşil': '#38a169', 
+            'sarı': '#ecc94b', 'siyah': '#1a202c', 'turuncu': '#dd6b20', 
+            'mor': '#805ad5', 'pembe': '#d53f8c', 'beyaz': '#ffffff'
         };
 
-        // Eşleşme bulunamazsa verilecek varsayılan yanıtlar
-        this.fallbackResponses = [
-            "Bu girdi üzerinde derin anlamsal analiz yapıyorum ancak tam niyetini çıkaramadım. Biraz daha açar mısın?",
-            "Kelime dağarcığımdaki kurallarla tam eşleşmedi. Kod mu yazmak istiyorsun, yoksa genel bir soru mu?",
-            "Seni duydum ve anladım, fakat bu konudaki mantık bloklarım henüz programlanmadı. Başka bir şey deneyelim mi?"
-        ];
+        // Boyut Veritabanı
+        this.sizes = { 'küçük': 30, 'orta': 70, 'büyük': 130, 'devasa': 250 };
     }
 
-    // Basit Tokenizer ve Niyet Sınıflandırıcı
-    analyze(userInput) {
-        const startTime = performance.now();
-        const cleanInput = userInput.toLowerCase().trim();
+    parseAndDraw(sentence) {
+        const text = sentence.toLowerCase().trim();
         
-        let detectedIntent = null;
-        let highestScore = 0;
-
-        // Cümle içindeki kelimeleri tara ve niyet skoru hesapla
-        for (let intent in this.intents) {
-            let score = 0;
-            this.intents[intent].keywords.forEach(keyword => {
-                if (cleanInput.includes(keyword)) {
-                    score += 1;
-                }
-            });
-
-            if (score > highestScore) {
-                highestScore = score;
-                detectedIntent = intent;
-            }
+        // 1. TEMİZLEME KOMUTU
+        if (text.includes('temizle') || text.includes('sil') || text.includes('clear')) {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            return { success: true, msg: "Tuval tamamen temizlendi! Yeni şaheserini bekliyorum." };
         }
 
-        const endTime = performance.now();
-        const cognitiveTime = (endTime - startTime).toFixed(2);
-
-        // Yanıtı Belirle
-        if (detectedIntent && highestScore > 0) {
-            const intentData = this.intents[detectedIntent];
-            const randomIndex = Math.floor(Math.random() * intentData.responses.length);
-            return {
-                response: intentData.responses[randomIndex],
-                mood: intentData.mood,
-                confidence: Math.min(100, highestScore * 50),
-                cognitiveTime: cognitiveTime
-            };
-        } else {
-            const randomIndex = Math.floor(Math.random() * this.fallbackResponses.length);
-            return {
-                response: this.fallbackResponses[randomIndex],
-                mood: "Düşünceli / Belirsiz",
-                confidence: 20,
-                cognitiveTime: cognitiveTime
-            };
+        // 2. TÜM EKRANI BOYAMA KOMUTU
+        if (text.includes('boya') || text.includes('kapla')) {
+            let foundColor = this.extractColor(text);
+            this.ctx.fillStyle = foundColor;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            return { success: true, msg: `Tüm ekran başarıyla ${this.getColorName(foundColor)} renkle kaplandı.` };
         }
+
+        // 3. ŞEKİL ÇİZME ANALİZİ
+        let shape = null;
+        if (text.includes('kare') || text.includes('dikdörtgen') || text.includes('kutu')) shape = 'square';
+        else if (text.includes('çember') || text.includes('daire') || text.includes('yuvarlak')) shape = 'circle';
+        else if (text.includes('çizgi') || text.includes('hat')) shape = 'line';
+
+        if (!shape) {
+            return { success: false, msg: "Ne çizmek istediğini tam anlayamadım. Cümle içinde 'kare', 'çember', 'çizgi' gibi kelimeler kullanabilirsin!" };
+        }
+
+        // Renk ve Boyut Ayıkla
+        let color = this.extractColor(text);
+        let size = this.extractSize(text);
+
+        // Rastgele Koordinat Belirle (Tuvalin ortalarında bir yere çizsin)
+        let x = Math.random() * (this.canvas.width - size * 2) + size;
+        let y = Math.random() * (this.canvas.height - size * 2) + size;
+
+        // Çizimi Gerçekleştir
+        this.ctx.fillStyle = color;
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = 5;
+
+        if (shape === 'square') {
+            this.ctx.fillRect(x - size/2, y - size/2, size, size);
+        } else if (shape === 'circle') {
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, size / 2, 0, 2 * Math.PI);
+            this.ctx.fill();
+        } else if (shape === 'line') {
+            this.ctx.beginPath();
+            this.ctx.moveTo(x - size, y);
+            this.ctx.lineTo(x + size, y);
+            this.ctx.stroke();
+        }
+
+        return { 
+            success: true, 
+            msg: `İsteğin üzerine tuvalin rastgele bir noktasına **${this.getColorName(color)}** renkte bir **${shape === 'square' ? 'Kare' : shape === 'circle' ? 'Çember' : 'Çizgi'}** yerleştirdim!` 
+        };
+    }
+
+    extractColor(text) {
+        for (let key in this.colors) {
+            if (text.includes(key)) return this.colors[key];
+        }
+        return '#3182ce'; // Varsayılan mavi
+    }
+
+    getColorName(hex) {
+        for (let key in this.colors) {
+            if (this.colors[key] === hex) return key;
+        }
+        return "özel";
+    }
+
+    extractSize(text) {
+        for (let key in this.sizes) {
+            if (text.includes(key)) return this.sizes[key];
+        }
+        return 80; // Varsayılan orta boy
     }
 }
 
-// Arayüz ve AI Entegrasyonu
-const ai = new CoreAI();
+// Arayüz Bağlantıları
+let painter;
 const chatOutput = document.getElementById('chatOutput');
 const userInput = document.getElementById('userInput');
 const sendBtn = document.getElementById('sendBtn');
-const aiStatusNode = document.getElementById('aiStatusNode');
-const aiMoodText = document.getElementById('aiMoodText');
-const statCognitive = document.getElementById('statCognitive');
-const statConfidence = document.getElementById('statConfidence');
+const brainStatus = document.getElementById('brainStatus');
+const brainMood = document.getElementById('brainMood');
 
-function handleMessage() {
-    const text = userInput.value.trim();
-    if (text === "") return;
-
-    // Kullanıcı mesajını ekrana bas
-    appendMessage(text, 'user');
-    userInput.value = "";
-
-    // AI'ı "Düşünüyor" moduna al
-    aiStatusNode.className = "status-indicator thinking";
-    aiMoodText.innerText = "Durum: İşleniyor...";
-
-    // Gerçekçi bir AI gecikmesi simüle et (500ms)
-    setTimeout(() => {
-        const analysis = ai.analyze(text);
-
-        if (analysis.response === "CLEAR_COMMAND_TRIGGERED") {
-            chatOutput.innerHTML = `<div class="message ai"><span class="bot-tag">[CORE-AI]:</span> Terminal temizlendi. Hafıza taze.</div>`;
-        } else {
-            appendMessage(analysis.response, 'ai');
-        }
-
-        // Panel İstatistiklerini Güncelle
-        aiStatusNode.className = "status-indicator live";
-        aiMoodText.innerText = `Durum: ${analysis.mood}`;
-        statCognitive.innerText = `${analysis.cognitiveTime}ms`;
-        statConfidence.innerText = `%${analysis.confidence}`;
-
-    }, 500);
+function resizeCanvas() {
+    const c = document.getElementById('paintCanvas');
+    // Tuvalin piksellerini kaybetmeden boyutunu koru
+    if(c && painter) {
+        c.width = c.parentElement.clientWidth;
+        c.height = c.parentElement.clientHeight;
+    }
 }
 
-function appendMessage(text, sender) {
-    const msgDiv = document.createElement('div');
-    msgDiv.className = `message ${sender}`;
-    if (sender === 'ai') {
-        msgDiv.innerHTML = `<span class="bot-tag">[CORE-AI]:</span> ${text}`;
-    } else {
-        msgDiv.innerText = text;
-    }
-    chatOutput.appendChild(msgDiv);
+window.onload = () => {
+    painter = new PainterAI('paintCanvas');
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+};
+
+function processCommand() {
+    const cmd = userInput.value.trim();
+    if (cmd === "") return;
+
+    // Kullanıcı yazısını ekrana ekle
+    appendMsg(cmd, 'user');
+    userInput.value = "";
+
+    brainStatus.className = "brain-status thinking";
+    brainMood.innerText = "Durum: Çizim Tasarlanıyor...";
+
+    setTimeout(() => {
+        const result = painter.parseAndDraw(cmd);
+        appendMsg(result.msg, 'ai');
+        
+        brainStatus.className = "brain-status active";
+        brainMood.innerText = "Durum: Tuval Güncellendi";
+    }, 400);
+}
+
+function appendMsg(text, sender) {
+    const div = document.createElement('div');
+    div.className = `msg ${sender}`;
+    div.innerHTML = sender === 'ai' ? `<strong>[AI]:</strong> ${text}` : text;
+    chatOutput.appendChild(div);
     chatOutput.scrollTop = chatOutput.scrollHeight;
 }
 
-sendBtn.addEventListener('click', handleMessage);
-userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleMessage(); });
+sendBtn.addEventListener('click', processCommand);
+userInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') processCommand(); });
