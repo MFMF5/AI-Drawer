@@ -3,53 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CORE AI // INTELLIGENT WORKSPACE</title>
+    <title>AI DRAWER // ARTIFICIAL INTELLIGENCE CANVAS</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <canvas id="cursorMatrixCanvas"></canvas>
-
-    <div class="workspace-layout">
-        <div class="panel left-panel">
-            <div class="panel-header">🤖 AI ÇEKİRDEK YAPISI</div>
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="sidebar-header">🎨 AI ÇİZİM ASİSTANI</div>
             
-            <div class="ai-status-card">
-                <div class="status-indicator live" id="aiStatusNode"></div>
+            <div class="ai-brain-card">
+                <div class="brain-status active" id="brainStatus"></div>
                 <div>
-                    <div class="status-title">Core-NLP v1.2</div>
-                    <div class="status-sub" id="aiMoodText">Durum: Dinliyor / Kararlı</div>
+                    <div class="brain-title">Neural-Painter v2.0</div>
+                    <div class="brain-sub" id="brainMood">Durum: Tuval Hazır</div>
                 </div>
             </div>
 
-            <div class="stats-box">
-                <div class="stat-row"><span>Algı Sektörü:</span><span id="statCognitive">0ms</span></div>
-                <div class="stat-row"><span>Anlamsal Güven:</span><span id="statConfidence">%100</span></div>
-                <div class="stat-row"><span>Nöron Bağlantısı:</span><span>Active (Rule-Match)</span></div>
+            <div class="chat-wall" id="chatOutput">
+                <div class="msg ai">
+                    <strong>[AI]:</strong> Selam! Ben senin çizim asistanınım. Bana ne çizmemi istediğini söyleyebilirsin! 
+                    <br><br><u>Örnek Komutlar:</u>
+                    <br>• "Kırmızı bir kare çiz"
+                    <br>• "Büyük mavi bir çember yap"
+                    <br>• "Ekranı yeşile boya"
+                    <br>• "Temizle"
+                </div>
             </div>
 
-            <div class="info-footer">
-                <p>// İmlecinizi ekranda hareket ettirerek siber matris çizgilerini tetikleyin.</p>
+            <div class="input-row">
+                <input type="text" id="userInput" placeholder="AI'a çizim komutu ver..." autocomplete="off">
+                <button id="sendBtn">ÇİZ</button>
             </div>
         </div>
 
-        <div class="panel main-panel">
-            <div class="panel-header">💻 YAPAY ZEKÂ DOĞAL DİL TERMİNALİ</div>
-            
-            <div class="chat-container" id="chatOutput">
-                <div class="message ai">
-                    <span class="bot-tag">[CORE-AI]:</span> Bağlantı kuruldu. Ben gerçek zamanlı kurallı bir yapay zekayım. Beni sadece tetiklemekle kalmıyorsun; yazdığın kelimelerin niyetini (Intent), duygusunu ve bağlamını analiz edebiliyorum. Bana ne yaptırmak istersin?
-                </div>
-            </div>
-
-            <div class="input-area">
-                <input type="text" id="userInput" placeholder="Yapay zekaya bir şeyler söyleyin (Örn: 'yardım et', 'kod yaz', 'nasılsın', 'temizle')..." autocomplete="off">
-                <button id="sendBtn">ÇALIŞTIR</button>
-            </div>
+        <div class="canvas-zone">
+            <canvas id="paintCanvas"></canvas>
         </div>
     </div>
 
     <script src="ai-engine.js"></script>
-    <script src="cursor-matrix.js"></script>
+    <script src="cursor.js"></script>
 </body>
 </html>
