@@ -3,37 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI DRAWER // ARTIFICIAL INTELLIGENCE CANVAS</title>
+    <title>REAL NEURAL AI DRAWER // v3.0</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
 </head>
 <body>
 
     <div class="app-container">
         <div class="sidebar">
-            <div class="sidebar-header">🎨 AI ÇİZİM ASİSTANI</div>
+            <div class="sidebar-header">🧠 TENSORFLOW SİNİR AĞI (NEURAL NET)</div>
             
             <div class="ai-brain-card">
-                <div class="brain-status active" id="brainStatus"></div>
+                <div class="brain-status thinking" id="brainStatus"></div>
                 <div>
-                    <div class="brain-title">Neural-Painter v2.0</div>
-                    <div class="brain-sub" id="brainMood">Durum: Tuval Hazır</div>
+                    <div class="brain-title">TensorFlow Core v3.0</div>
+                    <div class="brain-sub" id="brainMood">Yapay Sinir Ağı Eğitiliyor...</div>
                 </div>
             </div>
 
+            <div class="nn-stats">
+                <div class="stat-row"><span>Yapay Nöron Sayısı:</span><span>32 (Gizli Katman)</span></div>
+                <div class="stat-row"><span>Hata Oranı (Loss):</span><span id="lossValue">Hesaplanıyor...</span></div>
+                <div class="stat-row"><span>Eğitim Epoku (Epoch):</span><span id="epochValue">0/100</span></div>
+            </div>
+
             <div class="chat-wall" id="chatOutput">
-                <div class="msg ai">
-                    <strong>[AI]:</strong> Selam! Ben senin çizim asistanınım. Bana ne çizmemi istediğini söyleyebilirsin! 
-                    <br><br><u>Örnek Komutlar:</u>
-                    <br>• "Kırmızı bir kare çiz"
-                    <br>• "Büyük mavi bir çember yap"
-                    <br>• "Ekranı yeşile boya"
-                    <br>• "Temizle"
+                <div class="msg ai" id="initMsg">
+                    <strong>[SİSTEM]:</strong> Yapay Sinir Ağı tarayıcıda sıfırdan inşa ediliyor. Lütfen eğitim tamamlanana kadar bekleyin (5-10 saniye sürer)...
                 </div>
             </div>
 
             <div class="input-row">
-                <input type="text" id="userInput" placeholder="AI'a çizim komutu ver..." autocomplete="off">
-                <button id="sendBtn">ÇİZ</button>
+                <input type="text" id="userInput" placeholder="Sinir ağına komut verin..." disabled autocomplete="off">
+                <button id="sendBtn" disabled>DÜŞÜN & ÇİZ</button>
             </div>
         </div>
 
