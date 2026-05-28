@@ -1,145 +1,196 @@
 /**
- * AI NEURAL PAINTER ENGINE
+ * GERÇEK TENSORFLOW.JS SİNİR AĞI ÇİZİM MOTORU
  */
 
-class PainterAI {
-    constructor(canvasId) {
-        this.canvas = document.getElementById(canvasId);
+class RealNeuralAI {
+    constructor() {
+        this.canvas = document.getElementById('paintCanvas');
         this.ctx = this.canvas.getContext('2d');
         
-        // Renk Veritabanı
-        this.colors = {
-            'kırmızı': '#e53e3e', 'mavi': '#3182ce', 'yeşil': '#38a169', 
-            'sarı': '#ecc94b', 'siyah': '#1a202c', 'turuncu': '#dd6b20', 
-            'mor': '#805ad5', 'pembe': '#d53f8c', 'beyaz': '#ffffff'
-        };
+        // Kelime Sözlüğü (Bag of Words modeli için kelimeleri benzersiz sayılara eşliyoruz)
+        this.vocabulary = [
+            'kare', 'kutu', 'dikdörtgen', 'blok', 'küp', // Sınıf 0 (Kare) için kelimeler
+            'çember', 'daire', 'yuvarlak', 'güneş', 'top', // Sınıf 1 (Çember) için kelimeler
+            'çizgi', 'hat', 'vektör', 'ok', 'şerit'         // Sınıf 2 (Çizgi) için kelimeler
+        ];
+        
+        // Yapay Zekayı Eğiteceğimiz Sentetik Veri Seti (Training Data)
+        // Giriş cümleleri -> Çıkış Şekil Sınıfı (0: Kare, 1: Çember, 2: Çizgi)
+        this.trainingData = [
+            { text: "kare çiz", label: 0 },
+            { text: "büyük bir kutu yap", label: 0 },
+            { text: "kırmızı dikdörtgen blok yerleştir", label: 0 },
+            { text: "ekrana küp koy", label: 0 },
+            
+            { text: "mavi çember yap", label: 1 },
+            { text: "yuvarlak bir daire çiz", label: 1 },
+            { text: "sarı bir güneş yap", label: 1 },
+            { text: "top gibi yuvarlak olsun", label: 1 },
+            
+            { text: "düz çizgi çek", label: 2 },
+            { text: "uzun bir hat oluştur", label: 2 },
+            { text: "vektör şerit yerleştir", label: 2 },
+            { text: "ince bir ok çiz", label: 2 }
+        ];
 
-        // Boyut Veritabanı
-        this.sizes = { 'küçük': 30, 'orta': 70, 'büyük': 130, 'devasa': 250 };
+        this.model = null;
+        this.initNeuralNetwork();
     }
 
-    parseAndDraw(sentence) {
-        const text = sentence.toLowerCase().trim();
+    // Metni Yapay Zekanın Anlayacağı Sayısal Vektöre Dönüştürme (Text Vectorization)
+    textToVector(text) {
+        const tokens = text.toLowerCase().split(' ');
+        const vector = new Array(this.vocabulary.length).fill(0);
+        tokens.forEach(token => {
+            const index = this.vocabulary.indexOf(token);
+            if (index !== -1) vector[index] = 1; // Kelime varsa o indeksi 1 yap
+        });
+        return vector;
+    }
+
+    // Sinir Ağı Mimarisi Oluşturma ve Eğitme
+    async initNeuralNetwork() {
+        // 1. Model Tipi: Sıralı Katmanlar (Sequential)
+        this.model = tf.sequential();
         
-        // 1. TEMİZLEME KOMUTU
-        if (text.includes('temizle') || text.includes('sil') || text.includes('clear')) {
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            return { success: true, msg: "Tuval tamamen temizlendi! Yeni şaheserini bekliyorum." };
-        }
+        // Giriş Katmanı ve Gizli Katman (32 Yapay Nöron, Aktivasyon Fonksiyonu: ReLU)
+        this.model.add(tf.layers.dense({
+            inputShape: [this.vocabulary.length],
+            units: 32,
+            activation: 'relu'
+        }));
+        
+        // Çıkış Katmanı (3 Sınıfımız var: Kare, Çember, Çizgi. Olasılık için Softmax)
+        this.model.add(tf.layers.dense({
+            units: 3,
+            activation: 'softmax'
+        }));
 
-        // 2. TÜM EKRANI BOYAMA KOMUTU
-        if (text.includes('boya') || text.includes('kapla')) {
-            let foundColor = this.extractColor(text);
-            this.ctx.fillStyle = foundColor;
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-            return { success: true, msg: `Tüm ekran başarıyla ${this.getColorName(foundColor)} renkle kaplandı.` };
-        }
+        // Modeli Derle (Kayıp Fonksiyonu: Categorical Crossentropy, Optimizasyon: Adam)
+        this.model.compile({
+            optimizer: tf.train.adam(0.02),
+            loss: 'sparseCategoricalCrossentropy',
+            metrics: ['accuracy']
+        });
 
-        // 3. ŞEKİL ÇİZME ANALİZİ
-        let shape = null;
-        if (text.includes('kare') || text.includes('dikdörtgen') || text.includes('kutu')) shape = 'square';
-        else if (text.includes('çember') || text.includes('daire') || text.includes('yuvarlak')) shape = 'circle';
-        else if (text.includes('çizgi') || text.includes('hat')) shape = 'line';
+        // Verileri TensorFlow Tensor formatına çevir
+        const xs = tf.tensor2d(this.trainingData.map(d => this.textToVector(d.text)));
+        const ys = tf.tensor1d(this.trainingData.map(d => d.label), 'int32');
 
-        if (!shape) {
-            return { success: false, msg: "Ne çizmek istediğini tam anlayamadım. Cümle içinde 'kare', 'çember', 'çizgi' gibi kelimeler kullanabilirsin!" };
-        }
+        // Sinir Ağını Eğitmeye Başla (100 Döngü/Epoch)
+        await this.model.fit(xs, ys, {
+            epochs: 100,
+            callbacks: {
+                onEpochEnd: (epoch, logs) => {
+                    document.getElementById('epochValue').innerText = `${epoch + 1}/100`;
+                    document.getElementById('lossValue').innerText = logs.loss.toFixed(4);
+                }
+            }
+        });
 
-        // Renk ve Boyut Ayıkla
-        let color = this.extractColor(text);
-        let size = this.extractSize(text);
+        // Eğitim Bitti, Arayüzü Aktif Et
+        document.getElementById('brainStatus').className = "brain-status active";
+        document.getElementById('brainMood').innerText = "Durum: Sinir Ağı Eğitildi!";
+        document.getElementById('userInput').disabled = false;
+        document.getElementById('sendBtn').disabled = false;
+        document.getElementById('initMsg').innerHTML = `<strong>[AI]:</strong> Yapay Sinir Ağı (Neural Network) eğitimimi tamamladım! Artık verdiğin cümleleri matematiksel olarak analiz edebilirim. <br><br>Eğitilmediğim bir cümle kursan bile (Örn: "ekranda parlayan sarı bir güneş olsun") kelimelerin ağırlıklarından ne demek istediğini tahmin edeceğim!`;
+    }
 
-        // Rastgele Koordinat Belirle (Tuvalin ortalarında bir yere çizsin)
+    // Gerçek Zamanlı Tahmin Etme (Inference)
+    predictAndPaint(sentence) {
+        const inputVector = this.textToVector(sentence);
+        
+        // TensorFlow Belleğinde Tahmin Yürüt
+        const prediction = tf.tidy(() => {
+            const inputTensor = tf.tensor2d([inputVector]);
+            return this.model.predict(inputTensor).dataSync();
+        });
+
+        // En yüksek olasılıklı sınıfı bul
+        const highestPredictionIndex = prediction.indexOf(Math.max(...prediction));
+        const confidence = (prediction[highestPredictionIndex] * 100).toFixed(1);
+
+        // Renk Analizi (Basit estetik için)
+        let color = '#3182ce';
+        if (sentence.includes('kırmızı')) color = '#e53e3e';
+        else if (sentence.includes('yeşil')) color = '#38a169';
+        else if (sentence.includes('sarı')) color = '#ecc94b';
+        else if (sentence.includes('siyah')) color = '#1a202c';
+
+        this.drawShape(highestPredictionIndex, color);
+
+        const shapes = ['Kare', 'Çember', 'Çizgi'];
+        return {
+            shape: shapes[highestPredictionIndex],
+            confidence: confidence,
+            probs: prediction
+        };
+    }
+
+    drawShape(shapeId, color) {
+        let size = 100;
         let x = Math.random() * (this.canvas.width - size * 2) + size;
         let y = Math.random() * (this.canvas.height - size * 2) + size;
 
-        // Çizimi Gerçekleştir
         this.ctx.fillStyle = color;
         this.ctx.strokeStyle = color;
-        this.ctx.lineWidth = 5;
+        this.ctx.lineWidth = 6;
 
-        if (shape === 'square') {
+        if (shapeId === 0) { // Kare
             this.ctx.fillRect(x - size/2, y - size/2, size, size);
-        } else if (shape === 'circle') {
+        } else if (shapeId === 1) { // Çember
             this.ctx.beginPath();
             this.ctx.arc(x, y, size / 2, 0, 2 * Math.PI);
             this.ctx.fill();
-        } else if (shape === 'line') {
+        } else if (shapeId === 2) { // Çizgi
             this.ctx.beginPath();
             this.ctx.moveTo(x - size, y);
             this.ctx.lineTo(x + size, y);
             this.ctx.stroke();
         }
-
-        return { 
-            success: true, 
-            msg: `İsteğin üzerine tuvalin rastgele bir noktasına **${this.getColorName(color)}** renkte bir **${shape === 'square' ? 'Kare' : shape === 'circle' ? 'Çember' : 'Çizgi'}** yerleştirdim!` 
-        };
-    }
-
-    extractColor(text) {
-        for (let key in this.colors) {
-            if (text.includes(key)) return this.colors[key];
-        }
-        return '#3182ce'; // Varsayılan mavi
-    }
-
-    getColorName(hex) {
-        for (let key in this.colors) {
-            if (this.colors[key] === hex) return key;
-        }
-        return "özel";
-    }
-
-    extractSize(text) {
-        for (let key in this.sizes) {
-            if (text.includes(key)) return this.sizes[key];
-        }
-        return 80; // Varsayılan orta boy
     }
 }
 
-// Arayüz Bağlantıları
-let painter;
+// Global Tanımlamalar
+let aiCore;
 const chatOutput = document.getElementById('chatOutput');
 const userInput = document.getElementById('userInput');
 const sendBtn = document.getElementById('sendBtn');
-const brainStatus = document.getElementById('brainStatus');
-const brainMood = document.getElementById('brainMood');
+
+window.onload = () => {
+    aiCore = new RealNeuralAI();
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+};
 
 function resizeCanvas() {
     const c = document.getElementById('paintCanvas');
-    // Tuvalin piksellerini kaybetmeden boyutunu koru
-    if(c && painter) {
+    if(c) {
         c.width = c.parentElement.clientWidth;
         c.height = c.parentElement.clientHeight;
     }
 }
 
-window.onload = () => {
-    painter = new PainterAI('paintCanvas');
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-};
+function executeAI() {
+    const text = userInput.value.trim();
+    if(text === "") return;
 
-function processCommand() {
-    const cmd = userInput.value.trim();
-    if (cmd === "") return;
-
-    // Kullanıcı yazısını ekrana ekle
-    appendMsg(cmd, 'user');
+    appendMsg(text, 'user');
     userInput.value = "";
 
-    brainStatus.className = "brain-status thinking";
-    brainMood.innerText = "Durum: Çizim Tasarlanıyor...";
+    document.getElementById('brainStatus').className = "brain-status thinking";
 
     setTimeout(() => {
-        const result = painter.parseAndDraw(cmd);
-        appendMsg(result.msg, 'ai');
+        const result = aiCore.predictAndPaint(text);
         
-        brainStatus.className = "brain-status active";
-        brainMood.innerText = "Durum: Tuval Güncellendi";
-    }, 400);
+        let responseHTML = `Matematiksel Tahmin Motoru Sonucu:<br>
+        • Karar: <strong>${result.shape}</strong><br>
+        • Yapay Zeka Güven Oranı: <strong>%${result.confidence}</strong><br>
+        <small>Olasılık Dağılımı (Softmax): [Kare: ${result.probs[0].toFixed(2)}, Çember: ${result.probs[1].toFixed(2)}, Çizgi: ${result.probs[2].toFixed(2)}]</small>`;
+        
+        appendMsg(responseHTML, 'ai');
+        document.getElementById('brainStatus').className = "brain-status active";
+    }, 300);
 }
 
 function appendMsg(text, sender) {
@@ -150,5 +201,5 @@ function appendMsg(text, sender) {
     chatOutput.scrollTop = chatOutput.scrollHeight;
 }
 
-sendBtn.addEventListener('click', processCommand);
-userInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') processCommand(); });
+sendBtn.addEventListener('click', executeAI);
+userInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') executeAI(); });
